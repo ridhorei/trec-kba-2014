@@ -29,6 +29,9 @@ import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TIOStreamTransport;
+import org.apache.hadoop.io.compress.CompressionCodec;
+import org.apache.hadoop.io.compress.CompressionCodecFactory;
+import org.apache.hadoop.io.compress.CompressionInputStream;
 
 /**
  * RecordReader that emits filename, StreamItemWritable pairs. 
@@ -47,6 +50,7 @@ public class ThriftRecordReader extends RecordReader<Text, StreamItemWritable> {
   private StreamItemWritable value = new StreamItemWritable();
   private FileSplit fileSplit;
   private Configuration conf;
+  private CompressionCodecFactory compressionCodecs = null;
 
   public ThriftRecordReader(FileSplit fileSplit, Configuration conf)
       throws IOException {
@@ -86,8 +90,14 @@ public class ThriftRecordReader extends RecordReader<Text, StreamItemWritable> {
     FileSystem fs = path.getFileSystem(conf);
     in = fs.open(path);
 
-    tp = new TBinaryProtocol.Factory().getProtocol(new TIOStreamTransport(in));
-
+    compressionCodecs = new CompressionCodecFactory(conf);
+    final CompressionCodec codec = compressionCodecs.getCodec(path);
+    if (codec==null) {
+    	tp = new TBinaryProtocol.Factory().getProtocol(new TIOStreamTransport(in));
+    } else {
+    	CompressionInputStream cin = codec.createInputStream(in);
+    	tp = new TBinaryProtocol.Factory().getProtocol(new TIOStreamTransport(cin));
+    }
   }
 
   @Override
