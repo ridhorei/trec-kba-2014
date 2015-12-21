@@ -147,7 +147,7 @@ public class CountGenres extends Configured implements Tool {
     job.setReducerClass(IntSumReducer.class);
     job.setNumReduceTasks(1);
 
-    FileSystem.get(conf).delete(new Path(out), true);
+    //FileSystem.get(conf).delete(new Path(out), true);
     TextOutputFormat.setOutputPath(job, new Path(out));
     job.setOutputFormatClass(TextOutputFormat.class);
     job.setOutputKeyClass(Text.class);

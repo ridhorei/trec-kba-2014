@@ -100,7 +100,7 @@ public class ToyKbaSystem extends Configured implements Tool {
         String doc_entity = pair.getLeftElement();
         Long count = pair.getRightElement();
 
-        String relevanceRating = "1";
+        String relevanceRating = "2";
         String containsMention = "1";
         // Output format: team_id system_id stream_id target_id confidence relevance contains_mention date NULL NULL 0-0
         String line = teamname + " " + runtag + " " + doc_entity + " " + 
@@ -124,6 +124,7 @@ public class ToyKbaSystem extends Configured implements Tool {
     private static final Text date = new Text();
     private static final StringLongPair scorepair = new StringLongPair();
     private Map<String, Pattern> topicregexes = new LinkedHashMap<String, Pattern>();
+    private Map<String, String> topicTargetIds= new LinkedHashMap<String, String>();
     private Map<String, HashSet<String>> partialtopics = new LinkedHashMap<String, HashSet<String>>();
 
     /** 
@@ -156,6 +157,7 @@ public class ToyKbaSystem extends Configured implements Tool {
         while ((line=br.readLine()) != null) {
         	String[] items = line.trim().split("\t");
         	topicNames.add(items[0]);
+        	topicTargetIds.put(items[0], items[1]);        
         }
         
         for (String t : topicNames) {
@@ -221,7 +223,11 @@ public class ToyKbaSystem extends Configured implements Tool {
       for (String topic : topicregexes.keySet()) {
 
         long count = 0;
-        String entity = streamid + " " + topic;
+        
+        String topicTargetId = topicTargetIds.get(topic);
+        //String entity = streamid + " " + topic;
+        String docEntity = streamid + " " + topicTargetId;
+        
         Map<String, Long> counts = new LinkedHashMap<String, Long>();
 
         for (String t : partialtopics.get(topic)) {
@@ -248,7 +254,7 @@ public class ToyKbaSystem extends Configured implements Tool {
 
           count = 1000 * Collections.max(counts.values()) / topic.length();
 
-          scorepair.set(entity, count);
+          scorepair.set(docEntity, count);
           context.write(date, scorepair);
         }
       }
