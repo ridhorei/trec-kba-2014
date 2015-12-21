@@ -92,12 +92,15 @@ public class ThriftRecordReader extends RecordReader<Text, StreamItemWritable> {
 
     compressionCodecs = new CompressionCodecFactory(conf);
     final CompressionCodec codec = compressionCodecs.getCodec(path);
+    tp = new TBinaryProtocol.Factory().getProtocol(new TIOStreamTransport(in));
+    
+    /* Disable compression support: it causes major error
     if (codec==null) {
     	tp = new TBinaryProtocol.Factory().getProtocol(new TIOStreamTransport(in));
     } else {
     	CompressionInputStream cin = codec.createInputStream(in);
     	tp = new TBinaryProtocol.Factory().getProtocol(new TIOStreamTransport(cin));
-    }
+    }*/
   }
 
   @Override
@@ -118,7 +121,10 @@ public class ThriftRecordReader extends RecordReader<Text, StreamItemWritable> {
         position = length - in.available() - start;
       } catch (Exception e) {
         e.printStackTrace();
-        throw new IOException(e);
+        String msg ="ThriftRecordReader:" + fileSplit.getPath().toString();
+        msg += position + " : " + length + " : "  + in.available() + " : " + start;
+        throw new IOException(msg);
+        //return false;
       }
 
     } else {
